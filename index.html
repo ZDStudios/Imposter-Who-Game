@@ -1125,11 +1125,22 @@ function revealRole() {
     const firstLetter = word[0].toUpperCase();
     const length = word.replace(/\s/g, '').length;
     const vowels = (word.match(/[aeiou]/gi) || []).length;
+
+    // Pick a related word from the same topic (never the real word) as a
+    // "similar to" clue — gives the imposter a real thing to anchor their
+    // bluff on instead of just letter/length trivia.
+    const otherWords = game.topic.words.filter(w => w !== word);
+    const similarWord = otherWords.length
+      ? otherWords[Math.floor(Math.random() * otherWords.length)]
+      : null;
+
     const hints = [
       `Starts with "${firstLetter}"`,
       `${length} letter${length !== 1 ? 's' : ''} long`,
       `Contains ${vowels} vowel${vowels !== 1 ? 's' : ''}`,
     ];
+    if (similarWord) hints.push(`Related to "${similarWord}"`);
+
     hintChips.innerHTML = hints.map(h => `<span class="hint-chip">${h}</span>`).join('');
     impHints.style.display = 'block';
     hintEl.textContent = 'Use these hints to blend in — pretend you know the word!';
