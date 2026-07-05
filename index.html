@@ -677,6 +677,7 @@
   <div class="top-nav">
     <button class="nav-back" onclick="goHome()">✕</button>
     <span class="nav-title">Role Reveal</span>
+    <span class="round-topic-badge" id="revealTopicBadge" style="margin-left:auto;">—</span>
   </div>
   <div class="progress-bar"><div class="progress-fill" id="revealProgress"></div></div>
   
@@ -716,7 +717,14 @@
   </div>
 
   <div style="flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:20px; text-align:center; padding: 20px 0;">
-    <div style="font-size: 72px; line-height:1;">🗣️</div>
+    <div class="panel panel-sm" id="discussStarterCard" style="width:100%;">
+      <div class="section-label" style="justify-content:center;">Starts the discussion</div>
+      <div style="display:flex; align-items:center; justify-content:center; gap:10px;">
+        <span style="font-size:28px;" id="discussStarterEmoji">🎲</span>
+        <span style="font-family:var(--font-display); font-size:32px; letter-spacing:4px; color:var(--accent);" id="discussStarterName">—</span>
+      </div>
+    </div>
+    <div style="font-size: 64px; line-height:1;">🗣️</div>
     <div style="font-family: var(--font-display); font-size: 40px; letter-spacing: 6px; color: var(--text);">DISCUSS</div>
     <div style="font-family: var(--font-mono); font-size: 12px; letter-spacing: 2px; color: var(--text-faint); max-width: 280px; line-height:1.8; text-transform: uppercase;">
       Talk it out. Who seems like they don't know the word?
@@ -767,22 +775,69 @@
 // ============================================================
 //  DATA
 // ============================================================
+// Each word carries a sub-category "g" so imposter hints can point to a
+// word that's genuinely similar, not just "also in this broad topic".
 const TOPICS = [
-  { id: 'animals',    name: 'Animals',      emoji: '🦁', words: ['Tiger','Elephant','Dolphin','Eagle','Wolf','Penguin','Cobra','Gorilla','Cheetah','Parrot','Shark','Kangaroo'] },
-  { id: 'sports',     name: 'Sports',       emoji: '⚽', words: ['Soccer','Tennis','Basketball','Swimming','Golf','Boxing','Skiing','Cycling','Cricket','Rugby','Archery','Wrestling'] },
-  { id: 'food',       name: 'Food',         emoji: '🍕', words: ['Pizza','Sushi','Burger','Tacos','Pasta','Curry','Ramen','Steak','Salad','Dumplings','Paella','Croissant'] },
-  { id: 'movies',     name: 'Movies',       emoji: '🎬', words: ['Action','Comedy','Horror','Thriller','Romance','Sci-Fi','Western','Musical','Drama','Heist','Documentary','Animation'] },
-  { id: 'countries',  name: 'Countries',    emoji: '🌍', words: ['France','Japan','Brazil','Egypt','Canada','Australia','India','Russia','Mexico','Italy','Norway','Thailand'] },
-  { id: 'jobs',       name: 'Jobs',         emoji: '💼', words: ['Doctor','Teacher','Pilot','Chef','Lawyer','Artist','Soldier','Farmer','Scientist','Musician','Architect','Surgeon'] },
-  { id: 'space',      name: 'Space',        emoji: '🚀', words: ['Asteroid','Galaxy','Comet','Nebula','Pulsar','Quasar','Orbit','Meteor','Black Hole','Supernova','Telescope','Satellite'] },
-  { id: 'tech',       name: 'Technology',   emoji: '💻', words: ['Smartphone','Laptop','Robot','Internet','Camera','Drone','Battery','Keyboard','Processor','Algorithm','Firewall','Blockchain'] },
-  { id: 'music',      name: 'Music',        emoji: '🎸', words: ['Guitar','Drums','Piano','Violin','Trumpet','Bass','Flute','Saxophone','Harp','Cello','Banjo','Ukulele'] },
-  { id: 'emotions',   name: 'Emotions',     emoji: '😮', words: ['Euphoria','Dread','Nostalgia','Melancholy','Jealousy','Pride','Guilt','Awe','Fury','Serenity','Shame','Longing'] },
-  { id: 'videogames', name: 'Video Games',  emoji: '🎮', words: ['Fortnite','Minecraft','Zelda','Pokémon','Halo','Tetris','Doom','Portal','Bloodborne','Overwatch','Starcraft','Bioshock'] },
-  { id: 'weather',    name: 'Weather',      emoji: '⛈️', words: ['Tornado','Blizzard','Thunder','Hailstorm','Drought','Monsoon','Fog','Hurricane','Rainbow','Aurora','Heatwave','Frost'] },
-  { id: 'ocean',      name: 'Ocean',        emoji: '🌊', words: ['Coral','Tsunami','Submarine','Treasure','Tidal Wave','Kraken','Maelstrom','Bioluminescence','Shipwreck','Abyss','Sonar','Lagoon'] },
-  { id: 'superheroes',name: 'Superheroes',  emoji: '🦸', words: ['Batman','Spider-Man','Superman','Iron Man','Thor','Hulk','Wonder Woman','Flash','Deadpool','Wolverine','Black Widow','Aquaman'] },
-  { id: 'mythology',  name: 'Mythology',    emoji: '⚡', words: ['Zeus','Medusa','Phoenix','Minotaur','Cyclops','Cerberus','Hydra','Chimera','Pegasus','Titan','Oracle','Labyrinth'] },
+  { id: 'animals', name: 'Animals', emoji: '🦁', words: [
+    {w:'Tiger',g:'bigcat'},{w:'Elephant',g:'largemammal'},{w:'Dolphin',g:'sea'},{w:'Eagle',g:'bird'},
+    {w:'Wolf',g:'canine'},{w:'Penguin',g:'bird'},{w:'Cobra',g:'reptile'},{w:'Gorilla',g:'primate'},
+    {w:'Cheetah',g:'bigcat'},{w:'Parrot',g:'bird'},{w:'Shark',g:'sea'},{w:'Kangaroo',g:'largemammal'} ] },
+  { id: 'sports', name: 'Sports', emoji: '⚽', words: [
+    {w:'Soccer',g:'ballteam'},{w:'Tennis',g:'racket'},{w:'Basketball',g:'ballteam'},{w:'Swimming',g:'solo'},
+    {w:'Golf',g:'solo'},{w:'Boxing',g:'combat'},{w:'Skiing',g:'solo'},{w:'Cycling',g:'solo'},
+    {w:'Cricket',g:'ballteam'},{w:'Rugby',g:'ballteam'},{w:'Archery',g:'solo'},{w:'Wrestling',g:'combat'} ] },
+  { id: 'food', name: 'Food', emoji: '🍕', words: [
+    {w:'Pizza',g:'italian'},{w:'Sushi',g:'asian'},{w:'Burger',g:'handheld'},{w:'Tacos',g:'handheld'},
+    {w:'Pasta',g:'italian'},{w:'Curry',g:'asian'},{w:'Ramen',g:'asian'},{w:'Steak',g:'meat'},
+    {w:'Salad',g:'light'},{w:'Dumplings',g:'asian'},{w:'Paella',g:'rice'},{w:'Croissant',g:'pastry'} ] },
+  { id: 'movies', name: 'Movies', emoji: '🎬', words: [
+    {w:'Action',g:'tense'},{w:'Comedy',g:'light'},{w:'Horror',g:'scary'},{w:'Thriller',g:'tense'},
+    {w:'Romance',g:'light'},{w:'Sci-Fi',g:'genre'},{w:'Western',g:'genre'},{w:'Musical',g:'light'},
+    {w:'Drama',g:'serious'},{w:'Heist',g:'tense'},{w:'Documentary',g:'serious'},{w:'Animation',g:'genre'} ] },
+  { id: 'countries', name: 'Countries', emoji: '🌍', words: [
+    {w:'France',g:'europe'},{w:'Japan',g:'asia'},{w:'Brazil',g:'samerica'},{w:'Egypt',g:'africa'},
+    {w:'Canada',g:'namerica'},{w:'Australia',g:'oceania'},{w:'India',g:'asia'},{w:'Russia',g:'europe'},
+    {w:'Mexico',g:'namerica'},{w:'Italy',g:'europe'},{w:'Norway',g:'europe'},{w:'Thailand',g:'asia'} ] },
+  { id: 'jobs', name: 'Jobs', emoji: '💼', words: [
+    {w:'Doctor',g:'medical'},{w:'Teacher',g:'education'},{w:'Pilot',g:'transport'},{w:'Chef',g:'culinary'},
+    {w:'Lawyer',g:'legal'},{w:'Artist',g:'creative'},{w:'Soldier',g:'military'},{w:'Farmer',g:'outdoor'},
+    {w:'Scientist',g:'stem'},{w:'Musician',g:'creative'},{w:'Architect',g:'stem'},{w:'Surgeon',g:'medical'} ] },
+  { id: 'space', name: 'Space', emoji: '🚀', words: [
+    {w:'Asteroid',g:'object'},{w:'Galaxy',g:'structure'},{w:'Comet',g:'object'},{w:'Nebula',g:'structure'},
+    {w:'Pulsar',g:'stellar'},{w:'Quasar',g:'stellar'},{w:'Orbit',g:'concept'},{w:'Meteor',g:'object'},
+    {w:'Black Hole',g:'stellar'},{w:'Supernova',g:'stellar'},{w:'Telescope',g:'tech'},{w:'Satellite',g:'tech'} ] },
+  { id: 'tech', name: 'Technology', emoji: '💻', words: [
+    {w:'Smartphone',g:'device'},{w:'Laptop',g:'device'},{w:'Robot',g:'machine'},{w:'Internet',g:'concept'},
+    {w:'Camera',g:'device'},{w:'Drone',g:'machine'},{w:'Battery',g:'component'},{w:'Keyboard',g:'component'},
+    {w:'Processor',g:'component'},{w:'Algorithm',g:'concept'},{w:'Firewall',g:'concept'},{w:'Blockchain',g:'concept'} ] },
+  { id: 'music', name: 'Music', emoji: '🎸', words: [
+    {w:'Guitar',g:'string'},{w:'Drums',g:'percussion'},{w:'Piano',g:'keyboard'},{w:'Violin',g:'string'},
+    {w:'Trumpet',g:'brass'},{w:'Bass',g:'string'},{w:'Flute',g:'woodwind'},{w:'Saxophone',g:'woodwind'},
+    {w:'Harp',g:'string'},{w:'Cello',g:'string'},{w:'Banjo',g:'string'},{w:'Ukulele',g:'string'} ] },
+  { id: 'emotions', name: 'Emotions', emoji: '😮', words: [
+    {w:'Euphoria',g:'positive'},{w:'Dread',g:'negative'},{w:'Nostalgia',g:'bittersweet'},{w:'Melancholy',g:'negative'},
+    {w:'Jealousy',g:'negative'},{w:'Pride',g:'positive'},{w:'Guilt',g:'negative'},{w:'Awe',g:'positive'},
+    {w:'Fury',g:'negative'},{w:'Serenity',g:'positive'},{w:'Shame',g:'negative'},{w:'Longing',g:'bittersweet'} ] },
+  { id: 'videogames', name: 'Video Games', emoji: '🎮', words: [
+    {w:'Fortnite',g:'shooter'},{w:'Minecraft',g:'sandbox'},{w:'Zelda',g:'adventure'},{w:'Pokémon',g:'rpg'},
+    {w:'Halo',g:'shooter'},{w:'Tetris',g:'puzzle'},{w:'Doom',g:'shooter'},{w:'Portal',g:'puzzle'},
+    {w:'Bloodborne',g:'rpg'},{w:'Overwatch',g:'shooter'},{w:'Starcraft',g:'strategy'},{w:'Bioshock',g:'shooter'} ] },
+  { id: 'weather', name: 'Weather', emoji: '⛈️', words: [
+    {w:'Tornado',g:'storm'},{w:'Blizzard',g:'storm'},{w:'Thunder',g:'storm'},{w:'Hailstorm',g:'storm'},
+    {w:'Drought',g:'dry'},{w:'Monsoon',g:'rain'},{w:'Fog',g:'mild'},{w:'Hurricane',g:'storm'},
+    {w:'Rainbow',g:'mild'},{w:'Aurora',g:'mild'},{w:'Heatwave',g:'dry'},{w:'Frost',g:'cold'} ] },
+  { id: 'ocean', name: 'Ocean', emoji: '🌊', words: [
+    {w:'Coral',g:'reef'},{w:'Tsunami',g:'wave'},{w:'Submarine',g:'vessel'},{w:'Treasure',g:'object'},
+    {w:'Tidal Wave',g:'wave'},{w:'Kraken',g:'creature'},{w:'Maelstrom',g:'wave'},{w:'Bioluminescence',g:'phenomenon'},
+    {w:'Shipwreck',g:'vessel'},{w:'Abyss',g:'depth'},{w:'Sonar',g:'tech'},{w:'Lagoon',g:'reef'} ] },
+  { id: 'superheroes', name: 'Superheroes', emoji: '🦸', words: [
+    {w:'Batman',g:'dc'},{w:'Spider-Man',g:'marvel'},{w:'Superman',g:'dc'},{w:'Iron Man',g:'marvel'},
+    {w:'Thor',g:'marvel'},{w:'Hulk',g:'marvel'},{w:'Wonder Woman',g:'dc'},{w:'Flash',g:'dc'},
+    {w:'Deadpool',g:'marvel'},{w:'Wolverine',g:'marvel'},{w:'Black Widow',g:'marvel'},{w:'Aquaman',g:'dc'} ] },
+  { id: 'mythology', name: 'Mythology', emoji: '⚡', words: [
+    {w:'Zeus',g:'god'},{w:'Medusa',g:'creature'},{w:'Phoenix',g:'creature'},{w:'Minotaur',g:'creature'},
+    {w:'Cyclops',g:'creature'},{w:'Cerberus',g:'creature'},{w:'Hydra',g:'creature'},{w:'Chimera',g:'creature'},
+    {w:'Pegasus',g:'creature'},{w:'Titan',g:'god'},{w:'Oracle',g:'figure'},{w:'Labyrinth',g:'place'} ] },
 ];
 
 const PLAYER_EMOJIS = ['🦁','🐯','🐻','🦊','🐺','🐼','🐨','🐸','🐮','🐷','🐙','🦈','🦅','🦋','🐬','🦄'];
@@ -792,6 +847,7 @@ const PLAYER_EMOJIS = ['🦁','🐯','🐻','🦊','🐺','🐼','🐨','🐸','
 // ============================================================
 let state = {
   players: [],       // { id, name, emoji, wins, gamesPlayed, timesImposter }
+  lastWordByTopic: {}, // topicId -> last word picked, used to avoid repeats
   settings: {
     imposters: 1,
     timer: 30,
@@ -820,7 +876,7 @@ let game = {
 //  STORAGE
 // ============================================================
 function saveState() {
-  localStorage.setItem('imposter_game_v2', JSON.stringify({ players: state.players, settings: state.settings }));
+  localStorage.setItem('imposter_game_v2', JSON.stringify({ players: state.players, settings: state.settings, lastWordByTopic: state.lastWordByTopic }));
 }
 function loadState() {
   try {
@@ -829,8 +885,24 @@ function loadState() {
       const data = JSON.parse(raw);
       state.players = data.players || [];
       state.settings = Object.assign(state.settings, data.settings || {});
+      state.lastWordByTopic = data.lastWordByTopic || {};
     }
   } catch(e) {}
+}
+
+// Picks a word for the topic, heavily favoring words that weren't the
+// last word picked for that same topic (so back-to-back rounds on the
+// same topic don't keep landing on the same secret word).
+function pickWordForTopic(topic) {
+  const last = state.lastWordByTopic[topic.id];
+  let pool = topic.words;
+  if (last && topic.words.length > 1 && Math.random() < 0.9) {
+    pool = topic.words.filter(x => x.w !== last);
+  }
+  const chosen = pool[Math.floor(Math.random() * pool.length)];
+  state.lastWordByTopic[topic.id] = chosen.w;
+  saveState();
+  return chosen.w;
 }
 
 // ============================================================
@@ -1057,10 +1129,11 @@ function startGame() {
 
   // Reset game
   game.topic = topic;
-  game.word = topic.words[Math.floor(Math.random() * topic.words.length)];
+  game.word = pickWordForTopic(topic);
   game.clues = [];
   game.revealIndex = 0;
   game.voteTarget = null;
+  game.discussionStarter = null;
   clearTimer();
 
   // Assign roles
@@ -1080,6 +1153,8 @@ function startGame() {
 // ============================================================
 function setupRevealScreen() {
   game.revealIndex = 0;
+  const badge = document.getElementById('revealTopicBadge');
+  if (badge) badge.textContent = game.topic.emoji + ' ' + game.topic.name;
   showRevealCover();
 }
 
@@ -1126,12 +1201,17 @@ function revealRole() {
     const length = word.replace(/\s/g, '').length;
     const vowels = (word.match(/[aeiou]/gi) || []).length;
 
-    // Pick a related word from the same topic (never the real word) as a
-    // "similar to" clue — gives the imposter a real thing to anchor their
-    // bluff on instead of just letter/length trivia.
-    const otherWords = game.topic.words.filter(w => w !== word);
-    const similarWord = otherWords.length
-      ? otherWords[Math.floor(Math.random() * otherWords.length)]
+    // Pick a genuinely related word — same sub-category (e.g. "handheld"
+    // food, "bigcat" animal), not just anything from the broad topic.
+    // Falls back to any other word in the topic only if no group-mate exists.
+    const wordObj = game.topic.words.find(x => x.w === word);
+    const groupMates = wordObj
+      ? game.topic.words.filter(x => x.g === wordObj.g && x.w !== word)
+      : [];
+    const fallbackPool = game.topic.words.filter(x => x.w !== word);
+    const similarPool = groupMates.length ? groupMates : fallbackPool;
+    const similarWord = similarPool.length
+      ? similarPool[Math.floor(Math.random() * similarPool.length)].w
       : null;
 
     const hints = [
@@ -1167,6 +1247,19 @@ function nextReveal() {
 function startClueRound() {
   showScreen('screen-clue');
   document.getElementById('clueTopicBadge').textContent = game.topic.emoji + ' ' + game.topic.name;
+
+  // Pick a random player to start the discussion — never an imposter,
+  // so the starter can't accidentally get an unfair "goes first" edge
+  // while also being the one bluffing.
+  const nonImposters = state.players.filter(p => game.roles[p.id] !== 'imposter');
+  const pool = nonImposters.length ? nonImposters : state.players;
+  const starter = pool[Math.floor(Math.random() * pool.length)];
+  game.discussionStarter = starter ? starter.id : null;
+  const starterNameEl = document.getElementById('discussStarterName');
+  const starterEmojiEl = document.getElementById('discussStarterEmoji');
+  if (starter && starterNameEl) starterNameEl.textContent = starter.name;
+  if (starter && starterEmojiEl) starterEmojiEl.textContent = starter.emoji;
+
   // Discussion timer
   clearTimer();
   if (state.settings.discussEnabled && state.settings.discuss > 0) {
